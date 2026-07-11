@@ -40,6 +40,33 @@ export const searchResources = async (params: {
   return Array.isArray(response) ? (response as SearchResultItem[]) : [];
 };
 
+// LIST_QDN_RESOURCES — does NOT use the search index, returns all resources for a service.
+// More reliable for recently published content, but can be slow for large result sets.
+// Used as fallback when SEARCH_QDN_RESOURCES returns empty.
+export const listResources = async (params: {
+  service: string;
+  name?: string;
+  identifier?: string;
+  limit?: number;
+  offset?: number;
+  reverse?: boolean;
+  includeMetadata?: boolean;
+}): Promise<SearchResultItem[]> => {
+  const response = await requestQortium<unknown>({
+    action: 'LIST_QDN_RESOURCES',
+    service: params.service,
+    name: params.name,
+    identifier: params.identifier,
+    limit: params.limit ?? 100,
+    offset: params.offset ?? 0,
+    reverse: params.reverse ?? true,
+    includeMetadata: params.includeMetadata ?? true,
+    excludeBlocked: true,
+  });
+
+  return Array.isArray(response) ? (response as SearchResultItem[]) : [];
+};
+
 export const fetchJsonResource = async <T>(
   service: string,
   name: string,

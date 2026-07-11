@@ -12,6 +12,7 @@ import { createMediaId, createThumbnailId, createVideoId, toCommentId, toComment
 import {
   fetchJsonResource,
   getQdnResourceUrl,
+  listResources,
   publishJsonResource,
   publishMultipleQdnResources,
   searchResources,
@@ -29,7 +30,8 @@ export const searchVideos = async (
   limit = 20,
   query?: string,
 ): Promise<SearchResultItem[]> => {
-  return searchResources({
+  // Try SEARCH_QDN_RESOURCES first (uses search index)
+  const searchResults = await searchResources({
     service: VIDEO_METADATA_SERVICE,
     identifier: VIDEO_METADATA_PREFIX,
     prefix: true,
@@ -38,6 +40,26 @@ export const searchVideos = async (
     offset,
     includeMetadata: true,
   });
+
+  if (searchResults.length > 0) return searchResults;
+
+  // Fallback: LIST_QDN_RESOURCES does NOT use the search index.
+  // It lists all DOCUMENT resources; we client-side filter by vc-video- prefix.
+  // This catches recently published videos that haven't been indexed yet.
+  const allResources = await listResources({
+    service: VIDEO_METADATA_SERVICE,
+    limit: 200,
+    offset: 0,
+    reverse: true,
+    includeMetadata: true,
+  });
+
+  const filtered = allResources.filter(
+    (item) => item.identifier && item.identifier.startsWith(VIDEO_METADATA_PREFIX),
+  );
+
+  // Apply offset/limit client-side for the fallback
+  return filtered.slice(offset, offset + limit);
 };
 
 export const searchVideosByCategory = async (
