@@ -27,14 +27,25 @@ export const Header = ({ onSearch }: Props) => {
       gap: '1rem',
       height: 56,
     }}>
-      <div style={{
-        fontSize: '1.25rem',
-        fontWeight: 700,
-        color: '#6366f1',
-        whiteSpace: 'nowrap',
-      }}>
+      <button
+        onClick={() => navigate('/')}
+        style={{
+          fontSize: '1.25rem',
+          fontWeight: 700,
+          color: '#6366f1',
+          whiteSpace: 'nowrap',
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          padding: 0,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.25rem',
+        }}
+        title="Home"
+      >
         <span role="img" aria-label="Video Center">🎬</span> Video Center
-      </div>
+      </button>
 
       <form onSubmit={handleSubmit} style={{ flex: 1, maxWidth: 480 }}>
         <input
@@ -63,16 +74,17 @@ export const Header = ({ onSearch }: Props) => {
         <button
           onClick={() => navigate('/')}
           style={{
-            padding: '0.25rem 0.5rem',
+            padding: '0.25rem 0.625rem',
             borderRadius: 6,
             backgroundColor: '#f3f4f6',
             border: 'none',
             cursor: 'pointer',
             fontSize: '0.8125rem',
             color: '#374151',
+            fontWeight: 500,
           }}
         >
-          Fresh
+          🏠 Home
         </button>
         <button
           onClick={() => navigate('/following')}
