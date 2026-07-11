@@ -23,9 +23,12 @@ export const searchResources = async (params: {
   offset?: number;
   includeMetadata?: boolean;
 }): Promise<SearchResultItem[]> => {
+  // NOTE: SEARCH_QDN_RESOURCES uses a separate index from FETCH_QDN_RESOURCE.
+  // Newly published resources may take several minutes to appear in search results.
+  // Direct fetch via FETCH_QDN_RESOURCE is immediate after waitForResourceReady confirms READY.
   const response = await requestQortium<unknown>({
     action: 'SEARCH_QDN_RESOURCES',
-    mode: 'ALL',
+    mode: 'LATEST',
     reverse: true,
     excludeBlocked: true,
     limit: params.limit ?? 50,

@@ -61,7 +61,7 @@ export const HomePage = ({ searchQuery }: Props) => {
           description={
             searchQuery
               ? 'Try a different search term.'
-              : 'Be the first to publish a video on Video Center!'
+              : 'Be the first to publish a video on Video Center! Newly published videos may take a few minutes to appear in search results as the QDN index updates.'
           }
         />
       )}
