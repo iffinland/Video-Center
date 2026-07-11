@@ -2,6 +2,7 @@
 // Canonical reference: qortium-blog/src/services/qdn/qdnService.ts (VERIFIED-E2E)
 
 import type { QdnResourceRef, QdnResourceStatus, SearchResultItem } from '../../types/video';
+import type { QortiumRequest } from '../../types/qortium';
 import { requestQortium } from '../qortium/qortiumClient';
 import { encodeJsonToBase64, fileToBase64, parseJsonLike } from './encoding';
 
@@ -41,10 +42,10 @@ export const searchResources = async (params: {
 };
 
 // LIST_QDN_RESOURCES — does NOT use the search index, returns all resources for a service.
-// More reliable for recently published content, but can be slow for large result sets.
-// Used as fallback when SEARCH_QDN_RESOURCES returns empty.
+// Primary retrieval method following Qortium Publish Manager pattern.
+// Canonical reference: QortiumDev/qortium-publish-manager/src/api/qortal.ts listResources() (VERIFIED-E2E)
 export const listResources = async (params: {
-  service: string;
+  service?: string;
   name?: string;
   identifier?: string;
   limit?: number;
@@ -53,17 +54,18 @@ export const listResources = async (params: {
   includeMetadata?: boolean;
 }): Promise<SearchResultItem[]> => {
   try {
-    const response = await requestQortium<unknown>({
+    const requestParams: Record<string, unknown> = {
       action: 'LIST_QDN_RESOURCES',
-      service: params.service,
-      name: params.name,
-      identifier: params.identifier,
+      includeMetadata: params.includeMetadata ?? true,
       limit: params.limit ?? 200,
       offset: params.offset ?? 0,
       reverse: params.reverse ?? true,
-      includeMetadata: params.includeMetadata ?? true,
-    });
+    };
+    if (params.service) requestParams.service = params.service;
+    if (params.name) requestParams.name = params.name;
+    if (params.identifier) requestParams.identifier = params.identifier;
 
+    const response = await requestQortium<unknown>(requestParams as QortiumRequest);
     return Array.isArray(response) ? (response as SearchResultItem[]) : [];
   } catch {
     return [];
@@ -279,13 +281,8 @@ export const publishJsonResource = async ({
   tags?: string[];
   filename?: string;
 }) => {
-  const tagFields = (tags ?? [])
-    .slice(0, 5)
-    .reduce<Record<string, string>>((fields, tag, index) => {
-      fields[`tag${index + 1}`] = tag;
-      return fields;
-    }, {});
-
+  // Qortium Publish Manager pattern: tags passed as array, not tag1/tag2
+  // Canonical reference: QortiumDev/qortium-publish-manager/src/api/qortal.ts publishResourceBase64()
   await withPublishRetry(() =>
     requestQortium({
       action: 'PUBLISH_QDN_RESOURCE',
@@ -294,9 +291,9 @@ export const publishJsonResource = async ({
       identifier,
       data64: encodeJsonToBase64(payload),
       filename,
-      title,
-      description,
-      ...tagFields,
+      ...(title ? { title } : {}),
+      ...(description ? { description } : {}),
+      ...(tags?.length ? { tags } : {}),
     }),
   );
 

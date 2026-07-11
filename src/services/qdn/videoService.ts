@@ -1,7 +1,7 @@
 // Video Center — domain-specific video service
 // Canonical references:
-//   Search: qortium-blog/src/services/blog/blogService.ts listPosts() (VERIFIED-E2E)
-//   Fetch: qortium-blog/src/services/blog/blogService.ts fetchBlogPost() (VERIFIED-E2E)
+//   List: QortiumDev/qortium-publish-manager/src/api/qortal.ts listResources() (VERIFIED-E2E)
+//   Search: QortiumDev/qortium-publish-manager/src/api/qortal.ts searchResources() (VERIFIED-E2E)
 //   Publish: qortium-blog/src/services/blog/blogService.ts createPost() + mediaService.ts (VERIFIED-E2E)
 
 import type { QdnResourceRef, SearchResultItem, VideoMetadataV1 } from '../../types/video';
@@ -21,33 +21,14 @@ import {
   type QdnResourceToPublish,
 } from './qdnService';
 import { encodeJsonToBase64 } from './encoding';
-import { VIDEO_METADATA_PREFIX } from './identifiers';
 
 const VIDEO_METADATA_SERVICE = 'DOCUMENT';
 
-// Shared helper: try SEARCH first, fall back to LIST with client-side prefix filter.
-// LIST_QDN_RESOURCES bypasses the search index and reliably returns recently published resources.
-const searchWithListFallback = async (
-  searchParams: Record<string, unknown>,
-  clientFilter: (item: SearchResultItem) => boolean,
-  limit: number,
-  offset: number,
-): Promise<SearchResultItem[]> => {
-  // 1. Try SEARCH_QDN_RESOURCES (fast, uses index)
-  try {
-    const searchResults = await searchResources({
-      service: VIDEO_METADATA_SERVICE,
-      ...searchParams,
-      limit,
-      offset,
-      includeMetadata: true,
-    } as Parameters<typeof searchResources>[0]);
-    if (searchResults.length > 0) return searchResults;
-  } catch {
-    // Search unavailable — fall through
-  }
-
-  // 2. Fallback: LIST_QDN_RESOURCES (bypasses index)
+// List videos using LIST_QDN_RESOURCES (primary) with SEARCH fallback.
+// LIST_QDN_RESOURCES does NOT use the search index — returns all resources immediately.
+// Canonical reference: QortiumDev/qortium-publish-manager/src/api/qortal.ts
+const listVideosFromQdn = async (limit: number, offset: number): Promise<SearchResultItem[]> => {
+  // Primary: LIST_QDN_RESOURCES with service filter, no name = all DOCUMENT resources
   const allResources = await listResources({
     service: VIDEO_METADATA_SERVICE,
     limit: 200,
@@ -56,8 +37,29 @@ const searchWithListFallback = async (
     includeMetadata: true,
   });
 
-  const filtered = allResources.filter(clientFilter);
-  return filtered.slice(offset, offset + limit);
+  const filtered = allResources.filter(
+    (item) => item.identifier && item.identifier.startsWith('vc-video-'),
+  );
+
+  if (filtered.length > 0) {
+    return filtered.slice(offset, offset + limit);
+  }
+
+  // Fallback: try SEARCH_QDN_RESOURCES (uses index, may be stale)
+  try {
+    const searchResults = await searchResources({
+      service: VIDEO_METADATA_SERVICE,
+      query: 'vc-video',
+      limit,
+      offset,
+      includeMetadata: true,
+    });
+    return searchResults.filter(
+      (item) => item.identifier?.startsWith('vc-video-'),
+    );
+  } catch {
+    return [];
+  }
 };
 
 export const searchVideos = async (
@@ -65,12 +67,19 @@ export const searchVideos = async (
   limit = 20,
   query?: string,
 ): Promise<SearchResultItem[]> => {
-  return searchWithListFallback(
-    { identifier: VIDEO_METADATA_PREFIX, prefix: true, query },
-    (item) => !!item.identifier && item.identifier.startsWith(VIDEO_METADATA_PREFIX),
-    limit,
-    offset,
-  );
+  const results = await listVideosFromQdn(limit * 2, offset);
+
+  if (query) {
+    const q = query.toLowerCase();
+    return results
+      .filter((item) => {
+        const title = item.title || item.identifier || '';
+        return title.toLowerCase().includes(q) || item.name.toLowerCase().includes(q);
+      })
+      .slice(0, limit);
+  }
+
+  return results.slice(0, limit);
 };
 
 export const searchVideosByCategory = async (
@@ -78,17 +87,14 @@ export const searchVideosByCategory = async (
   offset = 0,
   limit = 20,
 ): Promise<SearchResultItem[]> => {
+  const results = await listVideosFromQdn(200, 0);
   const lowerCategory = category.toLowerCase();
-  return searchWithListFallback(
-    { identifier: VIDEO_METADATA_PREFIX, prefix: true, query: category },
-    (item) => {
-      if (!item.identifier?.startsWith(VIDEO_METADATA_PREFIX)) return false;
-      const tags = item.tags ?? [];
-      return tags.some((tag) => tag.toLowerCase().includes(lowerCategory));
-    },
-    limit * 2,
-    offset,
-  );
+  const filtered = results.filter((item) => {
+    if (!item.identifier?.startsWith('vc-video-')) return false;
+    const tags = item.tags ?? [];
+    return tags.some((tag) => tag.toLowerCase().includes(lowerCategory));
+  });
+  return filtered.slice(offset, offset + limit);
 };
 
 export const searchVideosByCreator = async (
@@ -96,12 +102,11 @@ export const searchVideosByCreator = async (
   offset = 0,
   limit = 20,
 ): Promise<SearchResultItem[]> => {
-  return searchWithListFallback(
-    { identifier: VIDEO_METADATA_PREFIX, prefix: true, name: creatorName, exactMatchNames: true },
-    (item) => !!item.identifier && item.identifier.startsWith(VIDEO_METADATA_PREFIX),
-    limit,
-    offset,
+  const results = await listVideosFromQdn(200, 0);
+  const filtered = results.filter(
+    (item) => item.name === creatorName && item.identifier?.startsWith('vc-video-'),
   );
+  return filtered.slice(offset, offset + limit);
 };
 
 export const fetchVideoMetadata = async (
@@ -297,24 +302,27 @@ export const fetchComments = async (
   limit = 100,
 ): Promise<CommentV1[]> => {
   const prefix = toCommentPrefix(videoId);
-  const results = await searchResources({
+
+  // Use LIST_QDN_RESOURCES — same pattern as the QDN Explorer
+  const allResources = await listResources({
     service: COMMENT_SERVICE,
-    identifier: prefix,
-    prefix: true,
-    limit,
+    limit: 200,
+    offset: 0,
+    reverse: false,
     includeMetadata: false,
   });
+
+  // Client-side filter by comment prefix for this video
+  const matchingIdentifiers = allResources
+    .filter((item) => item.identifier?.startsWith(prefix))
+    .map((item) => ({ name: item.name, identifier: item.identifier }));
 
   // Fetch each comment, validate, filter deleted, sort by createdAt ASC
   const comments: CommentV1[] = [];
 
-  for (const item of results) {
+  for (const { name, identifier } of matchingIdentifiers) {
     try {
-      const raw = await fetchJsonResource<unknown>(
-        COMMENT_SERVICE,
-        item.name,
-        item.identifier,
-      );
+      const raw = await fetchJsonResource<unknown>(COMMENT_SERVICE, name, identifier);
       if (isValidComment(raw) && raw.status === 'published' && raw.videoId === videoId) {
         comments.push(raw);
       }
@@ -324,7 +332,7 @@ export const fetchComments = async (
   }
 
   comments.sort((a, b) => a.createdAt - b.createdAt);
-  return comments;
+  return comments.slice(0, limit);
 };
 
 export const publishComment = async (
