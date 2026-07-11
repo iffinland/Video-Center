@@ -25,27 +25,29 @@ import { VIDEO_METADATA_PREFIX } from './identifiers';
 
 const VIDEO_METADATA_SERVICE = 'DOCUMENT';
 
-export const searchVideos = async (
-  offset = 0,
-  limit = 20,
-  query?: string,
+// Shared helper: try SEARCH first, fall back to LIST with client-side prefix filter.
+// LIST_QDN_RESOURCES bypasses the search index and reliably returns recently published resources.
+const searchWithListFallback = async (
+  searchParams: Record<string, unknown>,
+  clientFilter: (item: SearchResultItem) => boolean,
+  limit: number,
+  offset: number,
 ): Promise<SearchResultItem[]> => {
-  // Try SEARCH_QDN_RESOURCES first (uses search index)
-  const searchResults = await searchResources({
-    service: VIDEO_METADATA_SERVICE,
-    identifier: VIDEO_METADATA_PREFIX,
-    prefix: true,
-    query,
-    limit,
-    offset,
-    includeMetadata: true,
-  });
+  // 1. Try SEARCH_QDN_RESOURCES (fast, uses index)
+  try {
+    const searchResults = await searchResources({
+      service: VIDEO_METADATA_SERVICE,
+      ...searchParams,
+      limit,
+      offset,
+      includeMetadata: true,
+    } as Parameters<typeof searchResources>[0]);
+    if (searchResults.length > 0) return searchResults;
+  } catch {
+    // Search unavailable — fall through
+  }
 
-  if (searchResults.length > 0) return searchResults;
-
-  // Fallback: LIST_QDN_RESOURCES does NOT use the search index.
-  // It lists all DOCUMENT resources; we client-side filter by vc-video- prefix.
-  // This catches recently published videos that haven't been indexed yet.
+  // 2. Fallback: LIST_QDN_RESOURCES (bypasses index)
   const allResources = await listResources({
     service: VIDEO_METADATA_SERVICE,
     limit: 200,
@@ -54,12 +56,21 @@ export const searchVideos = async (
     includeMetadata: true,
   });
 
-  const filtered = allResources.filter(
-    (item) => item.identifier && item.identifier.startsWith(VIDEO_METADATA_PREFIX),
-  );
-
-  // Apply offset/limit client-side for the fallback
+  const filtered = allResources.filter(clientFilter);
   return filtered.slice(offset, offset + limit);
+};
+
+export const searchVideos = async (
+  offset = 0,
+  limit = 20,
+  query?: string,
+): Promise<SearchResultItem[]> => {
+  return searchWithListFallback(
+    { identifier: VIDEO_METADATA_PREFIX, prefix: true, query },
+    (item) => !!item.identifier && item.identifier.startsWith(VIDEO_METADATA_PREFIX),
+    limit,
+    offset,
+  );
 };
 
 export const searchVideosByCategory = async (
@@ -67,24 +78,17 @@ export const searchVideosByCategory = async (
   offset = 0,
   limit = 20,
 ): Promise<SearchResultItem[]> => {
-  // Category stored in tags; SEARCH_QDN_RESOURCES query searches name + identifier fields.
-  // Use query for approximate category matching; client-side filtering as fallback.
-  const results = await searchResources({
-    service: VIDEO_METADATA_SERVICE,
-    identifier: VIDEO_METADATA_PREFIX,
-    prefix: true,
-    query: category,
-    limit: limit * 2,
-    offset,
-    includeMetadata: true,
-  });
-
-  // Client-side filter to refine category matches (tags field not searchable server-side)
   const lowerCategory = category.toLowerCase();
-  return results.filter((item) => {
-    const tags = item.tags ?? [];
-    return tags.some((tag) => tag.toLowerCase().includes(lowerCategory));
-  }).slice(0, limit);
+  return searchWithListFallback(
+    { identifier: VIDEO_METADATA_PREFIX, prefix: true, query: category },
+    (item) => {
+      if (!item.identifier?.startsWith(VIDEO_METADATA_PREFIX)) return false;
+      const tags = item.tags ?? [];
+      return tags.some((tag) => tag.toLowerCase().includes(lowerCategory));
+    },
+    limit * 2,
+    offset,
+  );
 };
 
 export const searchVideosByCreator = async (
@@ -92,16 +96,12 @@ export const searchVideosByCreator = async (
   offset = 0,
   limit = 20,
 ): Promise<SearchResultItem[]> => {
-  return searchResources({
-    service: VIDEO_METADATA_SERVICE,
-    identifier: VIDEO_METADATA_PREFIX,
-    prefix: true,
-    name: creatorName,
-    exactMatchNames: true,
+  return searchWithListFallback(
+    { identifier: VIDEO_METADATA_PREFIX, prefix: true, name: creatorName, exactMatchNames: true },
+    (item) => !!item.identifier && item.identifier.startsWith(VIDEO_METADATA_PREFIX),
     limit,
     offset,
-    includeMetadata: true,
-  });
+  );
 };
 
 export const fetchVideoMetadata = async (

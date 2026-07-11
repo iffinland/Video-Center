@@ -52,19 +52,22 @@ export const listResources = async (params: {
   reverse?: boolean;
   includeMetadata?: boolean;
 }): Promise<SearchResultItem[]> => {
-  const response = await requestQortium<unknown>({
-    action: 'LIST_QDN_RESOURCES',
-    service: params.service,
-    name: params.name,
-    identifier: params.identifier,
-    limit: params.limit ?? 100,
-    offset: params.offset ?? 0,
-    reverse: params.reverse ?? true,
-    includeMetadata: params.includeMetadata ?? true,
-    excludeBlocked: true,
-  });
+  try {
+    const response = await requestQortium<unknown>({
+      action: 'LIST_QDN_RESOURCES',
+      service: params.service,
+      name: params.name,
+      identifier: params.identifier,
+      limit: params.limit ?? 200,
+      offset: params.offset ?? 0,
+      reverse: params.reverse ?? true,
+      includeMetadata: params.includeMetadata ?? true,
+    });
 
-  return Array.isArray(response) ? (response as SearchResultItem[]) : [];
+    return Array.isArray(response) ? (response as SearchResultItem[]) : [];
+  } catch {
+    return [];
+  }
 };
 
 export const fetchJsonResource = async <T>(
