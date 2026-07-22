@@ -28,15 +28,14 @@ export const resolveNameToAddress = async (name: string): Promise<string | null>
   }
 };
 
-export const sendTip = async (
-  recipientName: string,
-  amount: number,
-): Promise<void> => {
+export const sendTip = async (recipientName: string, amount: number): Promise<void> => {
   if (amount <= 0) throw new Error('Tip amount must be greater than zero.');
 
   const address = await resolveNameToAddress(recipientName);
   if (!address) {
-    throw new Error(`Could not resolve address for "${recipientName}". Ensure the name is registered on the network.`);
+    throw new Error(
+      `Could not resolve address for "${recipientName}". Ensure the name is registered on the network.`,
+    );
   }
 
   await requestQortium({

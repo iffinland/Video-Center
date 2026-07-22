@@ -1,4 +1,4 @@
-// Video Center — video detail page
+// Video Center — V2 video detail page
 
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -18,21 +18,28 @@ export const VideoDetailPage = () => {
   const decodedName = name ? decodeURIComponent(name) : undefined;
   const decodedId = identifier ? decodeURIComponent(identifier) : undefined;
 
+  const { account, identity } = useAccount();
   const { video, mediaUrl, thumbnailUrl, loading, error } = useVideoDetail(
     decodedName,
     decodedId,
+    identity,
   );
 
-  const { account } = useAccount();
   const {
     comments,
     loading: commentsLoading,
     error: commentsError,
     addComment,
     editComment,
-  } = useComments(video?.videoId, account);
+  } = useComments(video?.entityId, account, account?.name ?? '', identity);
 
-  const { sending: tipSending, error: tipError, success: tipSuccess, tip, reset: resetTip } = useTip();
+  const {
+    sending: tipSending,
+    error: tipError,
+    success: tipSuccess,
+    tip,
+    reset: resetTip,
+  } = useTip();
   const [showTipDialog, setShowTipDialog] = useState(false);
 
   if (loading) {
@@ -47,13 +54,6 @@ export const VideoDetailPage = () => {
     return <ErrorMessage message="Video not found." onRetry={() => navigate('/')} />;
   }
 
-  const formatDate = (ts: number) =>
-    new Date(ts).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-
   return (
     <div style={{ maxWidth: 900, margin: '0 auto' }}>
       {/* Player */}
@@ -66,26 +66,30 @@ export const VideoDetailPage = () => {
       </div>
 
       {/* Title */}
-      <h1 style={{
-        fontSize: '1.375rem',
-        fontWeight: 700,
-        marginBottom: '0.5rem',
-        lineHeight: 1.3,
-      }}>
+      <h1
+        style={{
+          fontSize: '1.375rem',
+          fontWeight: 700,
+          marginBottom: '0.5rem',
+          lineHeight: 1.3,
+        }}
+      >
         {video.title}
       </h1>
 
       {/* Meta row */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '0.75rem',
-        paddingBottom: '1rem',
-        borderBottom: '1px solid #e5e7eb',
-        marginBottom: '1rem',
-      }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '0.75rem',
+          paddingBottom: '1rem',
+          borderBottom: '1px solid #e5e7eb',
+          marginBottom: '1rem',
+        }}
+      >
         <div>
           <button
             onClick={() => navigate(`/channel/${encodeURIComponent(video.publisherName)}`)}
@@ -101,27 +105,27 @@ export const VideoDetailPage = () => {
           >
             {video.publisherName}
           </button>
-          <span style={{ color: '#9ca3af', fontSize: '0.8125rem', marginLeft: '0.75rem' }}>
-            {formatDate(video.createdAt)}
-          </span>
         </div>
 
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
           {video.category && (
-            <span style={{
-              padding: '0.25rem 0.625rem',
-              backgroundColor: '#eef2ff',
-              color: '#6366f1',
-              borderRadius: 20,
-              fontSize: '0.75rem',
-              fontWeight: 500,
-            }}>
+            <span
+              style={{
+                padding: '0.25rem 0.625rem',
+                backgroundColor: '#eef2ff',
+                color: '#6366f1',
+                borderRadius: 20,
+                fontSize: '0.75rem',
+                fontWeight: 500,
+              }}
+            >
               {video.category}
             </span>
           )}
           {video.durationSeconds && (
             <span style={{ color: '#6b7280', fontSize: '0.8125rem' }}>
-              {Math.floor(video.durationSeconds / 60)}:{String(video.durationSeconds % 60).padStart(2, '0')}
+              {Math.floor(video.durationSeconds / 60)}:
+              {String(video.durationSeconds % 60).padStart(2, '0')}
             </span>
           )}
           <button
@@ -148,19 +152,23 @@ export const VideoDetailPage = () => {
 
       {/* Description */}
       {video.description && (
-        <div style={{
-          backgroundColor: '#f9fafb',
-          borderRadius: 8,
-          padding: '1rem 1.25rem',
-          marginBottom: '1rem',
-        }}>
-          <p style={{
-            margin: 0,
-            fontSize: '0.9375rem',
-            lineHeight: 1.6,
-            color: '#374151',
-            whiteSpace: 'pre-wrap',
-          }}>
+        <div
+          style={{
+            backgroundColor: '#f9fafb',
+            borderRadius: 8,
+            padding: '1rem 1.25rem',
+            marginBottom: '1rem',
+          }}
+        >
+          <p
+            style={{
+              margin: 0,
+              fontSize: '0.9375rem',
+              lineHeight: 1.6,
+              color: '#374151',
+              whiteSpace: 'pre-wrap',
+            }}
+          >
             {video.description}
           </p>
         </div>
@@ -187,11 +195,13 @@ export const VideoDetailPage = () => {
       )}
 
       {/* Comments */}
-      <div style={{
-        marginTop: '1.5rem',
-        paddingTop: '1.5rem',
-        borderTop: '1px solid #e5e7eb',
-      }}>
+      <div
+        style={{
+          marginTop: '1.5rem',
+          paddingTop: '1.5rem',
+          borderTop: '1px solid #e5e7eb',
+        }}
+      >
         {commentsError && (
           <p style={{ color: '#ef4444', fontSize: '0.8125rem', marginBottom: '0.75rem' }}>
             {commentsError}
@@ -212,19 +222,24 @@ export const VideoDetailPage = () => {
       {/* Video metadata (debug/transparency) */}
       <details style={{ marginTop: '2rem', color: '#9ca3af', fontSize: '0.75rem' }}>
         <summary style={{ cursor: 'pointer', marginBottom: '0.5rem' }}>Resource details</summary>
-        <div style={{
-          backgroundColor: '#f9fafb',
-          borderRadius: 8,
-          padding: '0.75rem 1rem',
-          fontFamily: 'monospace',
-        }}>
-          <div>Schema: {video.schema}</div>
-          <div>Video ID: {video.videoId}</div>
+        <div
+          style={{
+            backgroundColor: '#f9fafb',
+            borderRadius: 8,
+            padding: '0.75rem 1rem',
+            fontFamily: 'monospace',
+          }}
+        >
+          <div>Schema: qvc-v2</div>
+          <div>Video ID: {video.entityId}</div>
           <div>Publisher: {video.publisherName}</div>
-          <div>Media: {video.mediaReference.service}/{video.mediaReference.identifier}</div>
-          <div>Thumbnail: {video.thumbnailReference.service}/{video.thumbnailReference.identifier}</div>
-          <div>Published: {formatDate(video.createdAt)}</div>
-          <div>Updated: {formatDate(video.updatedAt)}</div>
+          <div>Wallet: {video.walletAddress}</div>
+          <div>
+            Media: {video.mediaReference.service}/{video.mediaReference.identifier}
+          </div>
+          <div>
+            Thumbnail: {video.thumbnailReference.service}/{video.thumbnailReference.identifier}
+          </div>
           {video.mediaReference.size && (
             <div>Media size: {(video.mediaReference.size / (1024 * 1024)).toFixed(1)} MB</div>
           )}

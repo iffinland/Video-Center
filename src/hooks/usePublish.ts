@@ -1,18 +1,18 @@
-// Video Center — publish flow hook
-// Canonical reference: qortium-blog blogService + mediaService publish patterns (VERIFIED-E2E)
+// Video Center — V2 publish flow hook
+// Uses qvc-v2 envelope pattern.
 
 import { useCallback, useState } from 'react';
 import type { PublishProgress } from '../types/video';
-import { requireOwnedName } from '../services/qortium/accountService';
 import {
-  publishVideo,
-  validatePublishInput,
-  type PublishVideoInput,
-} from '../services/qdn/videoService';
+  publishVideoV2,
+  validatePublishV2Input,
+  type PublishVideoV2Input,
+} from '../services/qdn/videoServiceV2';
+import type { AccountProfile } from '../types/video';
 
-type UsePublishResult = {
+export type UsePublishResult = {
   progress: PublishProgress;
-  publish: (input: Omit<PublishVideoInput, 'ownerName'> & { ownerName?: string }, accountNames: string[]) => Promise<void>;
+  publish: (input: Omit<PublishVideoV2Input, 'identity'>, account: AccountProfile) => Promise<void>;
   reset: () => void;
 };
 
@@ -22,81 +22,73 @@ export const usePublish = (): UsePublishResult => {
   const [progress, setProgress] = useState<PublishProgress>(initialState);
 
   const publish = useCallback(
-    async (
-      input: Omit<PublishVideoInput, 'ownerName'> & { ownerName?: string },
-      accountNames: string[],
-    ) => {
+    async (input: Omit<PublishVideoV2Input, 'identity'>, account: AccountProfile) => {
       try {
-        // Validate owner name
         setProgress({ state: 'validating', message: 'Validating publishing identity…' });
 
-        let ownerName: string;
-        try {
-          ownerName = requireOwnedName(accountNames, input.ownerName);
-        } catch (err) {
+        if (!account || !account.name || !account.address) {
           setProgress({
             state: 'error',
-            message: 'Publishing name validation failed.',
-            error: err instanceof Error ? err.message : 'Invalid publishing name.',
+            message: 'Publishing requires a registered Qortium name.',
+            error: 'No account selected or account missing registered name.',
           });
           return;
         }
 
-        const fullInput: PublishVideoInput = { ...input, ownerName };
+        const identity = {
+          publisherName: account.name,
+          walletAddress: account.address,
+        };
 
-        // Validate all fields
-        const validationError = validatePublishInput(fullInput);
+        const fullInput: PublishVideoV2Input = { ...input, identity };
+
+        const validationError = validatePublishV2Input(fullInput);
         if (validationError) {
-          setProgress({
-            state: 'error',
-            message: 'Validation failed.',
-            error: validationError,
-          });
+          setProgress({ state: 'error', message: 'Validation failed.', error: validationError });
           return;
         }
 
-        setProgress({ state: 'ready', message: 'Ready to publish. Approve the request in Qortium Home…' });
+        setProgress({
+          state: 'ready',
+          message: 'Ready to publish. Approve the request in Qortium Home…',
+        });
 
-        // Approval + publish
         setProgress({
           state: 'awaiting_approval',
           message: 'Waiting for approval in Qortium Home…',
         });
 
-        // The publishVideo call will trigger the Home approval dialog
-        const metadata = await publishVideo(fullInput);
+        const metadata = await publishVideoV2(fullInput);
 
         setProgress({
           state: 'verifying',
           message: 'Verifying published resources on QDN…',
-          publishedVideoId: metadata.videoId,
-          publishedName: ownerName,
+          publishedVideoId: metadata.entityId,
+          publishedName: identity.publisherName,
         });
 
-        // Success
         setProgress({
           state: 'success',
           message: 'Video published successfully!',
-          publishedVideoId: metadata.videoId,
-          publishedName: ownerName,
+          publishedVideoId: metadata.entityId,
+          publishedName: identity.publisherName,
         });
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Publish failed.';
-
-        // Detect approval denial
         const lowerMessage = message.toLowerCase();
-        if (lowerMessage.includes('denied') || lowerMessage.includes('rejected') || lowerMessage.includes('cancelled')) {
+
+        if (
+          lowerMessage.includes('denied') ||
+          lowerMessage.includes('rejected') ||
+          lowerMessage.includes('cancelled')
+        ) {
           setProgress({
             state: 'approval_denied',
             message: 'Publishing was cancelled or denied.',
             error: message,
           });
         } else {
-          setProgress({
-            state: 'error',
-            message: 'Publishing failed.',
-            error: message,
-          });
+          setProgress({ state: 'error', message: 'Publishing failed.', error: message });
         }
       }
     },

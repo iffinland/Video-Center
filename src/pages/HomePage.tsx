@@ -1,9 +1,10 @@
-// Video Center — home/discovery page
+// Video Center — V2 home/discovery page
 
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { SearchResultItem } from '../types/video';
+import type { VideoCreate } from '../services/architectureV2/types';
 import { useVideos } from '../hooks/useVideos';
+import { useAccount } from '../hooks/useAccount';
 import { VideoGrid } from '../components/video/VideoGrid';
 import { LoadingSpinner, ErrorMessage, EmptyState } from '../components/shared/LoadingSpinner';
 
@@ -13,11 +14,14 @@ type Props = {
 
 export const HomePage = ({ searchQuery }: Props) => {
   const navigate = useNavigate();
-  const { videos, loading, error, hasMore, loadMore } = useVideos(20);
+  const { identity, error: accountError, loading: accountLoading } = useAccount();
+  const { videos, loading, error, diagnostics, refresh } = useVideos(identity);
 
   const handleVideoClick = useCallback(
-    (item: SearchResultItem) => {
-      navigate(`/video/${encodeURIComponent(item.name)}/${encodeURIComponent(item.identifier)}`);
+    (video: VideoCreate) => {
+      navigate(
+        `/video/${encodeURIComponent(video.publisherName)}/${encodeURIComponent(video.entityId)}`,
+      );
     },
     [navigate],
   );
@@ -26,11 +30,11 @@ export const HomePage = ({ searchQuery }: Props) => {
   const filtered = searchQuery
     ? videos.filter((v) => {
         const q = searchQuery.toLowerCase();
-        const title = ((v as Record<string, unknown>).title as string) || v.identifier;
         return (
-          title.toLowerCase().includes(q) ||
-          v.name.toLowerCase().includes(q) ||
-          (v.description && v.description.toLowerCase().includes(q))
+          v.title.toLowerCase().includes(q) ||
+          v.publisherName.toLowerCase().includes(q) ||
+          v.description.toLowerCase().includes(q) ||
+          v.tags.some((tag) => tag.toLowerCase().includes(q))
         );
       })
     : videos;
@@ -44,53 +48,51 @@ export const HomePage = ({ searchQuery }: Props) => {
         {!loading && !error && (
           <p style={{ color: '#6b7280', fontSize: '0.875rem', marginTop: '0.25rem' }}>
             {filtered.length} video{filtered.length !== 1 ? 's' : ''}
-            {searchQuery && videos.length !== filtered.length && ` (filtered from ${videos.length})`}
+            {searchQuery &&
+              videos.length !== filtered.length &&
+              ` (filtered from ${videos.length})`}
           </p>
         )}
       </div>
 
-      {loading && videos.length === 0 && <LoadingSpinner message="Loading videos from QDN…" />}
+      {accountLoading && <LoadingSpinner message="Loading account…" />}
 
-      {error && videos.length === 0 && (
-        <ErrorMessage message={error} onRetry={() => window.location.reload()} />
-      )}
+      {accountError && <ErrorMessage message={accountError} />}
 
-      {!loading && !error && filtered.length === 0 && (
+      {!accountLoading && loading && <LoadingSpinner message="Loading videos from QDN…" />}
+
+      {error && <ErrorMessage message={error} onRetry={refresh} />}
+
+      {!accountLoading && !loading && !error && filtered.length === 0 && (
         <EmptyState
           title={searchQuery ? 'No matching videos' : 'No videos yet'}
           description={
             searchQuery
               ? 'Try a different search term.'
-              : 'Be the first to publish a video on Video Center! Newly published videos may take a few minutes to appear in search results as the QDN index updates.'
+              : 'Be the first to publish a video on Video Center!'
           }
         />
       )}
 
-      {filtered.length > 0 && (
-        <>
-          <VideoGrid videos={filtered} onVideoClick={handleVideoClick} />
-          {hasMore && (
-            <div style={{ textAlign: 'center', marginTop: '2rem' }}>
-              <button
-                onClick={loadMore}
-                disabled={loading}
-                style={{
-                  padding: '0.625rem 1.5rem',
-                  backgroundColor: loading ? '#d1d5db' : '#6366f1',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 8,
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  fontSize: '0.875rem',
-                }}
-              >
-                {loading ? 'Loading…' : 'Load More'}
-              </button>
-            </div>
-          )}
-          {loading && videos.length > 0 && <LoadingSpinner message="Loading more…" />}
-        </>
+      {diagnostics.length > 0 && (
+        <div
+          style={{
+            marginBottom: '1rem',
+            padding: '0.5rem 0.75rem',
+            backgroundColor: '#fffbeb',
+            border: '1px solid #fcd34d',
+            borderRadius: 8,
+            fontSize: '0.75rem',
+            color: '#92400e',
+          }}
+        >
+          {diagnostics.slice(0, 3).map((d, i) => (
+            <div key={i}>{d}</div>
+          ))}
+        </div>
       )}
+
+      {filtered.length > 0 && <VideoGrid videos={filtered} onVideoClick={handleVideoClick} />}
     </div>
   );
 };

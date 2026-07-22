@@ -102,9 +102,7 @@ const fallbackQortiumRequest = async <T = unknown>(request: QortiumRequest): Pro
   // SEARCH_QDN_RESOURCES and LIST_QDN_RESOURCES fallback
   if (action === 'SEARCH_QDN_RESOURCES' || action === 'LIST_QDN_RESOURCES') {
     const pathBase =
-      action === 'SEARCH_QDN_RESOURCES'
-        ? '/arbitrary/resources/search'
-        : '/arbitrary/resources';
+      action === 'SEARCH_QDN_RESOURCES' ? '/arbitrary/resources/search' : '/arbitrary/resources';
     const path = buildQdnResourcesPath(request, pathBase);
     const nodeUrl = `${getNodeApiUrl()}${path}`;
     const response = await fetch(nodeUrl, {
@@ -121,7 +119,8 @@ const fallbackQortiumRequest = async <T = unknown>(request: QortiumRequest): Pro
   if (action === 'FETCH_QDN_RESOURCE') {
     const service = typeof request.service === 'string' ? request.service.trim() : '';
     const name = typeof request.name === 'string' ? request.name.trim() : '';
-    const identifier = typeof request.identifier === 'string' ? request.identifier.trim() : 'default';
+    const identifier =
+      typeof request.identifier === 'string' ? request.identifier.trim() : 'default';
     if (!service || !name) {
       throw new Error('FETCH_QDN_RESOURCE requires service and name.');
     }
@@ -146,7 +145,8 @@ const fallbackQortiumRequest = async <T = unknown>(request: QortiumRequest): Pro
   if (action === 'GET_QDN_RESOURCE_URL') {
     const service = typeof request.service === 'string' ? request.service.trim() : '';
     const name = typeof request.name === 'string' ? request.name.trim() : '';
-    const identifier = typeof request.identifier === 'string' ? request.identifier.trim() : 'default';
+    const identifier =
+      typeof request.identifier === 'string' ? request.identifier.trim() : 'default';
     if (!service || !name) {
       throw new Error('GET_QDN_RESOURCE_URL requires service and name.');
     }

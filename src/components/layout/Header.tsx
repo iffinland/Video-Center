@@ -1,5 +1,5 @@
 // Video Center — top header with search and publish
-// Canonical layout pattern: q-iffi-vaba-mees + Discussion Boards
+// Uses Tailwind utility classes + CSS custom properties
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -18,108 +18,46 @@ export const Header = ({ onSearch }: Props) => {
   };
 
   return (
-    <header style={{
-      display: 'flex',
-      alignItems: 'center',
-      padding: '0.5rem 1rem',
-      borderBottom: '1px solid #e5e7eb',
-      backgroundColor: '#fff',
-      gap: '1rem',
-      height: 56,
-    }}>
+    <header
+      className="flex items-center gap-4 px-4 h-14 border-b"
+      style={{
+        backgroundColor: 'var(--surface-card)',
+        borderColor: 'var(--line-subtle)',
+        color: 'var(--text-strong)',
+      }}
+    >
       <button
         onClick={() => navigate('/')}
-        style={{
-          fontSize: '1.25rem',
-          fontWeight: 700,
-          color: '#6366f1',
-          whiteSpace: 'nowrap',
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          padding: 0,
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.25rem',
-        }}
+        className="vc-btn-ghost flex items-center gap-1 text-lg font-bold whitespace-nowrap"
         title="Home"
       >
-        <span role="img" aria-label="Video Center">🎬</span> Video Center
+        <span role="img" aria-label="Video Center">
+          🎬
+        </span>{' '}
+        Video Center
       </button>
 
-      <form onSubmit={handleSubmit} style={{ flex: 1, maxWidth: 480 }}>
+      <form onSubmit={handleSubmit} className="flex-1 max-w-md">
         <input
           type="text"
           placeholder="Search videos…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          style={{
-            width: '100%',
-            padding: '0.5rem 0.75rem',
-            border: '1px solid #d1d5db',
-            borderRadius: 8,
-            fontSize: '0.875rem',
-            outline: 'none',
-          }}
+          className="vc-input"
         />
       </form>
 
-      <div style={{
-        display: 'flex',
-        gap: '0.5rem',
-        color: '#6b7280',
-        fontSize: '0.8125rem',
-        alignItems: 'center',
-      }}>
-        <button
-          onClick={() => navigate('/')}
-          style={{
-            padding: '0.25rem 0.625rem',
-            borderRadius: 6,
-            backgroundColor: '#f3f4f6',
-            border: 'none',
-            cursor: 'pointer',
-            fontSize: '0.8125rem',
-            color: '#374151',
-            fontWeight: 500,
-          }}
-        >
+      <div className="flex gap-2 items-center text-sm">
+        <button onClick={() => navigate('/')} className="vc-btn-ghost">
           🏠 Home
         </button>
-        <button
-          onClick={() => navigate('/following')}
-          style={{
-            padding: '0.25rem 0.5rem',
-            borderRadius: 6,
-            border: 'none',
-            cursor: 'pointer',
-            fontSize: '0.8125rem',
-            color: '#6366f1',
-            background: 'none',
-            fontWeight: 500,
-          }}
-        >
+        <button onClick={() => navigate('/following')} className="vc-btn-ghost">
           Following
         </button>
+        <button onClick={() => navigate('/publish')} className="vc-btn-primary">
+          + Publish
+        </button>
       </div>
-
-      <button
-        onClick={() => navigate('/publish')}
-        style={{
-          padding: '0.5rem 1rem',
-          backgroundColor: '#6366f1',
-          color: '#fff',
-          border: 'none',
-          borderRadius: 8,
-          cursor: 'pointer',
-          fontSize: '0.875rem',
-          fontWeight: 600,
-          whiteSpace: 'nowrap',
-          marginLeft: '0.5rem',
-        }}
-      >
-        + Publish
-      </button>
     </header>
   );
 };

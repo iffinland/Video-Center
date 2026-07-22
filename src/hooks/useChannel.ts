@@ -1,67 +1,60 @@
-// Video Center — channel hook (creator profile + video listing)
+// Video Center — V2 channel hook (creator profile + video listing)
 
 import { useCallback, useEffect, useState } from 'react';
-import type { SearchResultItem } from '../types/video';
-import { searchVideosByCreator } from '../services/qdn/videoService';
+import type { VideoCreate } from '../services/architectureV2/types';
+import type { IdentityValidator } from '../services/architectureV2/validation';
+import { discoverV2Videos } from '../services/qdn/videoServiceV2';
 
-type UseChannelResult = {
+export type UseChannelResult = {
   creatorName: string;
-  videos: SearchResultItem[];
+  videos: VideoCreate[];
   loading: boolean;
   error: string | null;
-  hasMore: boolean;
-  loadMore: () => void;
 };
 
-export const useChannel = (creatorName: string | undefined, limit = 20): UseChannelResult => {
-  const [videos, setVideos] = useState<SearchResultItem[]>([]);
+export const useChannel = (
+  creatorName: string | undefined,
+  identity: IdentityValidator | null,
+): UseChannelResult => {
+  const [videos, setVideos] = useState<VideoCreate[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [offset, setOffset] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
 
-  const fetchVideos = useCallback(
-    async (currentOffset: number, append: boolean) => {
-      if (!creatorName) return;
+  const fetchVideos = useCallback(async () => {
+    if (!creatorName) return;
+    if (!identity) {
+      setError('Identity validation is not available.');
+      return;
+    }
 
-      setLoading(true);
-      setError(null);
-      try {
-        const results = await searchVideosByCreator(creatorName, currentOffset, limit);
-        setVideos((prev) => (append ? [...prev, ...results] : results));
-        setHasMore(results.length >= limit);
-        setOffset(currentOffset + results.length);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load channel videos.');
-        setHasMore(false);
-      } finally {
-        setLoading(false);
-      }
-    },
-    [creatorName, limit],
-  );
+    setLoading(true);
+    setError(null);
+    try {
+      const state = await discoverV2Videos(identity);
+
+      const videoEntities = Object.values(state.authoritative.entities).filter(
+        (e): e is VideoCreate => e.entityType === 'video' && e.publisherName === creatorName,
+      );
+
+      setVideos(videoEntities);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load channel videos.');
+    } finally {
+      setLoading(false);
+    }
+  }, [creatorName, identity]);
 
   useEffect(() => {
     setVideos([]);
-    setOffset(0);
-    setHasMore(true);
-    if (creatorName) {
-      fetchVideos(0, false);
+    if (creatorName && identity) {
+      fetchVideos();
     }
-  }, [creatorName, fetchVideos]);
-
-  const loadMore = useCallback(() => {
-    if (!loading && hasMore && creatorName) {
-      fetchVideos(offset, true);
-    }
-  }, [loading, hasMore, offset, creatorName, fetchVideos]);
+  }, [creatorName, identity, fetchVideos]);
 
   return {
     creatorName: creatorName ?? '',
     videos,
     loading,
     error,
-    hasMore,
-    loadMore,
   };
 };

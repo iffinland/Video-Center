@@ -134,11 +134,7 @@ export const waitForResourceReady = async (
   let buildRequested = false;
 
   while (Date.now() - startedAt < timeoutMs) {
-    latest = await getResourceStatus(
-      service,
-      name,
-      identifier,
-    );
+    latest = await getResourceStatus(service, name, identifier);
 
     if (!buildRequested) {
       // Request build on first poll
@@ -156,7 +152,16 @@ export const waitForResourceReady = async (
     await sleep(1500);
   }
 
-  return latest;
+  // Timeout — resource never reached READY. Throw so callers don't silently
+  // proceed with a PUBLISHED-but-incomplete resource that will fail later.
+  const chunks =
+    latest.localChunkCount != null && latest.totalChunkCount != null
+      ? ` (${latest.localChunkCount}/${latest.totalChunkCount} chunks, ${latest.percentLoaded ?? '?'}%)`
+      : '';
+  throw new Error(
+    `Resource ${service}/${name}/${identifier} did not reach READY within ${timeoutMs}ms. ` +
+      `Last status: ${latest.status ?? 'UNKNOWN'}${chunks}.`,
+  );
 };
 
 // ── Publishing ──────────────────────────────────────────────

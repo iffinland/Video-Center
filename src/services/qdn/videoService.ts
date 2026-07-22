@@ -8,7 +8,13 @@ import type { QdnResourceRef, SearchResultItem, VideoMetadataV1 } from '../../ty
 import { MEDIA_LIMITS, formatBytes, isValidVideoMetadata } from '../../types/video';
 import type { CommentV1 } from '../../types/video';
 import { isValidComment, COMMENT_SCHEMA } from '../../types/video';
-import { createMediaId, createThumbnailId, createVideoId, toCommentId, toCommentPrefix } from './identifiers';
+import {
+  createMediaId,
+  createThumbnailId,
+  createVideoId,
+  toCommentId,
+  toCommentPrefix,
+} from './identifiers';
 import {
   fetchJsonResource,
   getQdnResourceUrl,
@@ -54,9 +60,7 @@ const listVideosFromQdn = async (limit: number, offset: number): Promise<SearchR
       offset,
       includeMetadata: true,
     });
-    return searchResults.filter(
-      (item) => item.identifier?.startsWith('vc-video-'),
-    );
+    return searchResults.filter((item) => item.identifier?.startsWith('vc-video-'));
   } catch {
     return [];
   }
@@ -113,11 +117,7 @@ export const fetchVideoMetadata = async (
   publisherName: string,
   identifier: string,
 ): Promise<VideoMetadataV1> => {
-  const raw = await fetchJsonResource<unknown>(
-    VIDEO_METADATA_SERVICE,
-    publisherName,
-    identifier,
-  );
+  const raw = await fetchJsonResource<unknown>(VIDEO_METADATA_SERVICE, publisherName, identifier);
 
   if (!isValidVideoMetadata(raw)) {
     throw new Error(
@@ -128,9 +128,7 @@ export const fetchVideoMetadata = async (
   return raw;
 };
 
-export const resolveVideoThumbnailUrl = async (
-  video: VideoMetadataV1,
-): Promise<string> => {
+export const resolveVideoThumbnailUrl = async (video: VideoMetadataV1): Promise<string> => {
   try {
     return await getQdnResourceUrl(video.thumbnailReference);
   } catch {
@@ -138,9 +136,7 @@ export const resolveVideoThumbnailUrl = async (
   }
 };
 
-export const resolveVideoMediaUrl = async (
-  video: VideoMetadataV1,
-): Promise<string> => {
+export const resolveVideoMediaUrl = async (video: VideoMetadataV1): Promise<string> => {
   try {
     return await getQdnResourceUrl(video.mediaReference);
   } catch {
@@ -190,9 +186,7 @@ export const validatePublishInput = (input: PublishVideoInput): string | null =>
   return null;
 };
 
-export const publishVideo = async (
-  input: PublishVideoInput,
-): Promise<VideoMetadataV1> => {
+export const publishVideo = async (input: PublishVideoInput): Promise<VideoMetadataV1> => {
   const now = Date.now();
   const videoId = createVideoId();
   const mediaId = createMediaId();
@@ -297,10 +291,7 @@ export const publishVideo = async (
 
 const COMMENT_SERVICE = 'DOCUMENT';
 
-export const fetchComments = async (
-  videoId: string,
-  limit = 100,
-): Promise<CommentV1[]> => {
+export const fetchComments = async (videoId: string, limit = 100): Promise<CommentV1[]> => {
   const prefix = toCommentPrefix(videoId);
 
   // Use LIST_QDN_RESOURCES — same pattern as the QDN Explorer
@@ -367,18 +358,10 @@ export const publishComment = async (
 
   await waitForResourceReady(COMMENT_SERVICE, authorName, commentId);
 
-  return verifyJsonResource<CommentV1>(
-    COMMENT_SERVICE,
-    authorName,
-    commentId,
-    isValidComment,
-  );
+  return verifyJsonResource<CommentV1>(COMMENT_SERVICE, authorName, commentId, isValidComment);
 };
 
-export const updateComment = async (
-  existing: CommentV1,
-  newBody: string,
-): Promise<CommentV1> => {
+export const updateComment = async (existing: CommentV1, newBody: string): Promise<CommentV1> => {
   const updated: CommentV1 = {
     ...existing,
     body: newBody.trim(),

@@ -44,11 +44,13 @@ export const CommentForm = ({
   return (
     <form onSubmit={handleSubmit} style={{ marginBottom: '1rem' }}>
       {error && (
-        <p style={{
-          color: '#ef4444',
-          fontSize: '0.8125rem',
-          marginBottom: '0.5rem',
-        }}>
+        <p
+          style={{
+            color: '#ef4444',
+            fontSize: '0.8125rem',
+            marginBottom: '0.5rem',
+          }}
+        >
           {error}
         </p>
       )}

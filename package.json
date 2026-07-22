@@ -8,7 +8,13 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview --host 127.0.0.1",
     "lint": "eslint .",
-    "typecheck": "tsc -b --noEmit"
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc -b --noEmit",
+    "test": "npm run test:foundation && npm run test:reactions",
+    "test:foundation": "tsc scripts/architectureV2.foundation.test.ts --outDir .tmp-tests --module ES2022 --target ES2022 --moduleResolution bundler --lib ES2022,DOM --skipLibCheck && node .tmp-tests/scripts/architectureV2.foundation.test.js",
+    "test:reactions": "tsc scripts/architectureV2.reactions.test.ts --outDir .tmp-tests --module ES2022 --target ES2022 --moduleResolution bundler --lib ES2022,DOM --skipLibCheck && node .tmp-tests/scripts/architectureV2.reactions.test.js"
   },
   "dependencies": {
     "lucide-react": "^1.23.0",
@@ -18,13 +24,20 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",
+    "@tailwindcss/postcss": "^4.3.3",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
     "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.5.4",
     "eslint": "^9.21.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.6",
     "eslint-plugin-react-hooks": "^5.1.0",
     "eslint-plugin-react-refresh": "^0.4.19",
     "globals": "^15.15.0",
+    "postcss": "^8.5.21",
+    "prettier": "^3.9.6",
+    "tailwindcss": "^4.3.3",
     "typescript": "~5.7.2",
     "typescript-eslint": "^8.24.1",
     "vite": "^6.3.5"

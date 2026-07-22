@@ -54,7 +54,8 @@ export const PublishForm = ({
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const isIdle = publishState === 'idle' || publishState === 'error' || publishState === 'approval_denied';
+  const isIdle =
+    publishState === 'idle' || publishState === 'error' || publishState === 'approval_denied';
 
   const validate = (): boolean => {
     const errs: Record<string, string> = {};
@@ -63,7 +64,8 @@ export const PublishForm = ({
     else if (title.length > 200) errs.title = 'Title must be 200 characters or fewer.';
 
     if (!description.trim()) errs.description = 'Description is required.';
-    else if (description.length > 5000) errs.description = 'Description must be 5000 characters or fewer.';
+    else if (description.length > 5000)
+      errs.description = 'Description must be 5000 characters or fewer.';
 
     if (!videoFile) errs.videoFile = 'A video file is required.';
     else if (videoFile.size > MEDIA_LIMITS.video.maxBytes) {
@@ -103,14 +105,17 @@ export const PublishForm = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{
-      maxWidth: 600,
-      margin: '0 auto',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '1rem',
-    }}>
-      <h2 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>Publish a Video</h2>
+    <form
+      onSubmit={handleSubmit}
+      style={{
+        maxWidth: 600,
+        margin: '0 auto',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '1rem',
+      }}
+    >
+      <h2 className="text-xl font-bold mb-0" style={{ color: 'var(--text-strong)' }}>Publish a Video</h2>
 
       {/* Publishing name */}
       <div>
@@ -119,17 +124,19 @@ export const PublishForm = ({
           value={selectedName}
           onChange={(e) => onNameChange(e.target.value)}
           disabled={!isIdle || disabled}
-          style={inputStyle}
+          className="vc-input"
         >
-          {accountNames.length === 0 && (
-            <option value="">No registered names available</option>
-          )}
+          {accountNames.length === 0 && <option value="">No registered names available</option>}
           {accountNames.map((name) => (
-            <option key={name} value={name}>{name}</option>
+            <option key={name} value={name}>
+              {name}
+            </option>
           ))}
         </select>
         {accountNames.length === 0 && (
-          <p style={hintStyle}>You need a registered Qortium name to publish. Register one in Qortium Home first.</p>
+          <p style={hintStyle}>
+            You need a registered Qortium name to publish. Register one in Qortium Home first.
+          </p>
         )}
       </div>
 
@@ -143,7 +150,7 @@ export const PublishForm = ({
           disabled={!isIdle || disabled}
           placeholder="Enter video title…"
           maxLength={200}
-          style={inputStyle}
+          className="vc-input"
         />
         {errors.title && <p style={errorStyle}>{errors.title}</p>}
       </div>
@@ -158,7 +165,8 @@ export const PublishForm = ({
           placeholder="Describe your video…"
           maxLength={5000}
           rows={4}
-          style={{ ...inputStyle, resize: 'vertical' }}
+          className="vc-input"
+          style={{ resize: 'vertical' }}
         />
         {errors.description && <p style={errorStyle}>{errors.description}</p>}
       </div>
@@ -170,10 +178,12 @@ export const PublishForm = ({
           value={category}
           onChange={(e) => setCategory(e.target.value)}
           disabled={!isIdle || disabled}
-          style={inputStyle}
+          className="vc-input"
         >
           {CATEGORIES.map((cat) => (
-            <option key={cat} value={cat}>{cat}</option>
+            <option key={cat} value={cat}>
+              {cat}
+            </option>
           ))}
         </select>
       </div>
@@ -187,7 +197,7 @@ export const PublishForm = ({
           onChange={(e) => setTags(e.target.value)}
           disabled={!isIdle || disabled}
           placeholder="tutorial, qortium, blockchain"
-          style={inputStyle}
+          className="vc-input"
         />
         {errors.tags && <p style={errorStyle}>{errors.tags}</p>}
       </div>
@@ -202,7 +212,8 @@ export const PublishForm = ({
           disabled={!isIdle || disabled}
           placeholder="en"
           maxLength={10}
-          style={{ ...inputStyle, maxWidth: 120 }}
+          className="vc-input"
+          style={{ maxWidth: 120 }}
         />
       </div>
 
@@ -214,7 +225,7 @@ export const PublishForm = ({
           accept="video/mp4,video/webm"
           onChange={(e) => setVideoFile(e.target.files?.[0] ?? null)}
           disabled={!isIdle || disabled}
-          style={inputStyle}
+          className="vc-input"
         />
         {videoFile && (
           <p style={hintStyle}>
@@ -232,7 +243,7 @@ export const PublishForm = ({
           accept="image/jpeg,image/png,image/webp"
           onChange={(e) => setThumbnailFile(e.target.files?.[0] ?? null)}
           disabled={!isIdle || disabled}
-          style={inputStyle}
+          className="vc-input"
         />
         {thumbnailFile && (
           <p style={hintStyle}>
@@ -246,16 +257,7 @@ export const PublishForm = ({
       <button
         type="submit"
         disabled={!isIdle || disabled || accountNames.length === 0}
-        style={{
-          padding: '0.75rem 1.5rem',
-          backgroundColor: isIdle && accountNames.length > 0 ? '#6366f1' : '#d1d5db',
-          color: '#fff',
-          border: 'none',
-          borderRadius: 8,
-          cursor: isIdle && accountNames.length > 0 ? 'pointer' : 'not-allowed',
-          fontSize: '1rem',
-          fontWeight: 600,
-        }}
+        className="vc-btn-primary w-full"
       >
         Publish Video
       </button>
@@ -267,23 +269,13 @@ const labelStyle: React.CSSProperties = {
   display: 'block',
   fontSize: '0.875rem',
   fontWeight: 600,
-  color: '#374151',
+  color: 'var(--text-strong)',
   marginBottom: '0.25rem',
-};
-
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '0.5rem 0.75rem',
-  border: '1px solid #d1d5db',
-  borderRadius: 8,
-  fontSize: '0.875rem',
-  outline: 'none',
-  backgroundColor: '#fff',
 };
 
 const hintStyle: React.CSSProperties = {
   fontSize: '0.75rem',
-  color: '#6b7280',
+  color: 'var(--text-muted)',
   marginTop: '0.25rem',
 };
 

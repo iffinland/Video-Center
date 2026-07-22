@@ -1,6 +1,6 @@
-// Video Center — publish page
+// Video Center — V2 publish page
 
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAccount } from '../hooks/useAccount';
 import { usePublish } from '../hooks/usePublish';
@@ -12,12 +12,6 @@ export const PublishPage = () => {
   const navigate = useNavigate();
   const { account, loading: accountLoading, error: accountError, hasBridge } = useAccount();
   const { progress, publish, reset } = usePublish();
-  const [selectedName, setSelectedName] = useState('');
-
-  // Set initial selected name when account loads
-  if (account && !selectedName && account.names.length > 0) {
-    setSelectedName(account.name);
-  }
 
   const handleSubmit = useCallback(
     (data: {
@@ -30,6 +24,9 @@ export const PublishPage = () => {
       thumbnailFile: File | null;
     }) => {
       if (!data.videoFile || !data.thumbnailFile) return;
+      if (!account) {
+        return;
+      }
 
       const tagList = data.tags
         .split(',')
@@ -38,7 +35,6 @@ export const PublishPage = () => {
 
       publish(
         {
-          ownerName: selectedName,
           title: data.title,
           description: data.description,
           category: data.category,
@@ -47,10 +43,10 @@ export const PublishPage = () => {
           thumbnailFile: data.thumbnailFile,
           language: data.language,
         },
-        account?.names ?? [],
+        account,
       );
     },
-    [publish, selectedName, account?.names],
+    [publish, account],
   );
 
   const handleViewVideo = useCallback(() => {
@@ -65,20 +61,22 @@ export const PublishPage = () => {
   if (!hasBridge && !accountLoading) {
     return (
       <div style={pageStyle}>
-        <div style={{
-          textAlign: 'center',
-          padding: '3rem',
-          backgroundColor: '#fff',
-          borderRadius: 12,
-          border: '1px solid #e5e7eb',
-        }}>
+        <div
+          style={{
+            textAlign: 'center',
+            padding: '3rem',
+            backgroundColor: '#fff',
+            borderRadius: 12,
+            border: '1px solid #e5e7eb',
+          }}
+        >
           <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🔒</div>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem' }}>
             Publishing Requires Qortium Home
           </h2>
           <p style={{ color: '#6b7280', maxWidth: 420, margin: '0 auto' }}>
-            Open Video Center inside Qortium Home to publish videos.
-            Browser development mode supports read-only browsing only.
+            Open Video Center inside Qortium Home to publish videos. Browser development mode
+            supports read-only browsing only.
           </p>
         </div>
       </div>
@@ -98,13 +96,15 @@ export const PublishPage = () => {
   if (accountError) {
     return (
       <div style={pageStyle}>
-        <div style={{
-          textAlign: 'center',
-          padding: '3rem',
-          backgroundColor: '#fff',
-          borderRadius: 12,
-          border: '1px solid #fecaca',
-        }}>
+        <div
+          style={{
+            textAlign: 'center',
+            padding: '3rem',
+            backgroundColor: '#fff',
+            borderRadius: 12,
+            border: '1px solid #fecaca',
+          }}
+        >
           <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>⚠️</div>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem' }}>
             Account Required
@@ -124,20 +124,22 @@ export const PublishPage = () => {
   if (account && account.names.length === 0) {
     return (
       <div style={pageStyle}>
-        <div style={{
-          textAlign: 'center',
-          padding: '3rem',
-          backgroundColor: '#fff',
-          borderRadius: 12,
-          border: '1px solid #e5e7eb',
-        }}>
+        <div
+          style={{
+            textAlign: 'center',
+            padding: '3rem',
+            backgroundColor: '#fff',
+            borderRadius: 12,
+            border: '1px solid #e5e7eb',
+          }}
+        >
           <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>📛</div>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem' }}>
             Registered Name Required
           </h2>
           <p style={{ color: '#6b7280', maxWidth: 420, margin: '0 auto' }}>
-            You need a registered Qortium name to publish videos.
-            Register a name in Qortium Home first, then return here.
+            You need a registered Qortium name to publish videos. Register a name in Qortium Home
+            first, then return here.
           </p>
         </div>
       </div>
@@ -145,23 +147,17 @@ export const PublishPage = () => {
   }
 
   const isPublishing =
-    progress.state !== 'idle' &&
-    progress.state !== 'error' &&
-    progress.state !== 'approval_denied';
+    progress.state !== 'idle' && progress.state !== 'error' && progress.state !== 'approval_denied';
 
   return (
     <div style={pageStyle}>
       {isPublishing ? (
-        <PublishStatus
-          progress={progress}
-          onReset={reset}
-          onViewVideo={handleViewVideo}
-        />
+        <PublishStatus progress={progress} onReset={reset} onViewVideo={handleViewVideo} />
       ) : (
         <PublishForm
           accountNames={account?.names ?? []}
-          selectedName={selectedName}
-          onNameChange={setSelectedName}
+          selectedName={account?.name ?? ''}
+          onNameChange={() => {}}
           onSubmit={handleSubmit}
           publishState={progress.state}
           disabled={false}

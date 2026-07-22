@@ -76,3 +76,42 @@ export const parseChannelId = (identifier: string) => {
   if (!identifier.startsWith(CHANNEL_PREFIX)) return null;
   return identifier.slice(CHANNEL_PREFIX.length) || null;
 };
+
+// ── Architecture V2 identifiers (qvc-v2 prefix) ────────────
+// Canonical reference: Discussion-Boards V2_IDENTIFIER_PREFIX
+
+export const V2_IDENTIFIER_PREFIX = 'qvc-v2-';
+export const V2_VIDEO_PREFIX = `${V2_IDENTIFIER_PREFIX}video-`;
+export const V2_COMMENT_PREFIX = `${V2_IDENTIFIER_PREFIX}comment-`;
+export const V2_FOLLOW_PREFIX = `${V2_IDENTIFIER_PREFIX}follow-`;
+export const V2_REACTION_PREFIX = `${V2_IDENTIFIER_PREFIX}react-`;
+export const V2_TIP_PREFIX = `${V2_IDENTIFIER_PREFIX}tip-`;
+export const V2_MODERATION_PREFIX = `${V2_IDENTIFIER_PREFIX}mod-`;
+
+// V2 Video metadata identifiers
+export const createV2VideoId = () => `${V2_VIDEO_PREFIX}${createShortId()}`;
+
+// V2 Comment identifiers — scoped to a video
+export const toV2CommentId = (videoId: string) => {
+  const videoIdPart = videoId.replace(/^qvc-/, '').replace(/^v2-/, '').slice(0, 30);
+  return `${V2_COMMENT_PREFIX}${videoIdPart}-${createShortId(COMMENT_ID_LENGTH)}`;
+};
+
+export const toV2CommentPrefix = (videoId: string) => {
+  const videoIdPart = videoId.replace(/^qvc-/, '').replace(/^v2-/, '').slice(0, 30);
+  return `${V2_COMMENT_PREFIX}${videoIdPart}-`;
+};
+
+// V2 Follow identifiers
+export const toV2FollowId = (subscriberName: string, targetName: string) => {
+  const sub = sanitizeIdentifierSegment(subscriberName, 18);
+  const tgt = sanitizeIdentifierSegment(targetName, 18);
+  return `${V2_FOLLOW_PREFIX}${sub}-${tgt}`;
+};
+
+// V2 Reaction identifiers
+export const toV2ReactionId = (targetId: string, actorName: string) => {
+  const normalizedActor = sanitizeIdentifierSegment(actorName, 24);
+  const targetPart = targetId.replace(/^qvc-/, '').slice(0, 40);
+  return `${V2_REACTION_PREFIX}${targetPart}-${normalizedActor}`;
+};

@@ -3,6 +3,14 @@
 import type { PublishProgress } from '../../types/video';
 import { LoadingSpinner, ErrorMessage } from '../shared/LoadingSpinner';
 
+const containerStyle: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  padding: '2rem',
+  textAlign: 'center',
+};
+
 type Props = {
   progress: PublishProgress;
   onReset: () => void;
@@ -25,10 +33,11 @@ export const PublishStatus = ({ progress, onReset, onViewVideo }: Props) => {
       return (
         <div style={containerStyle}>
           <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🛡️</div>
-          <h3 style={titleStyle}>Approval Required</h3>
-          <p style={messageStyle}>{message}</p>
-          <p style={hintStyle}>
-            Check Qortium Home for the approval dialog. Once approved, publishing will continue automatically.
+          <h3 className="text-lg font-bold mb-2" style={{ color: 'var(--text-strong)' }}>Approval Required</h3>
+          <p className="text-[0.9375rem] max-w-[400px] m-0 mb-1" style={{ color: 'var(--text-muted)' }}>{message}</p>
+          <p className="text-[0.8125rem] max-w-[400px]" style={{ color: 'var(--text-muted)' }}>
+            Check Qortium Home for the approval dialog. Once approved, publishing will continue
+            automatically.
           </p>
         </div>
       );
@@ -37,14 +46,14 @@ export const PublishStatus = ({ progress, onReset, onViewVideo }: Props) => {
       return (
         <div style={containerStyle}>
           <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>✅</div>
-          <h3 style={{ ...titleStyle, color: '#16a34a' }}>Published!</h3>
-          <p style={messageStyle}>{message}</p>
+          <h3 className="text-lg font-bold mb-2" style={{ color: 'var(--brand-primary-600)' }}>Published!</h3>
+          <p className="text-[0.9375rem] max-w-[400px] m-0" style={{ color: 'var(--text-muted)' }}>{message}</p>
           {publishedName && publishedVideoId && (
-            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
-              <button onClick={onViewVideo} style={primaryButtonStyle}>
+            <div className="flex gap-2 mt-3">
+              <button onClick={onViewVideo} className="vc-btn-primary">
                 View Video
               </button>
-              <button onClick={onReset} style={secondaryButtonStyle}>
+              <button onClick={onReset} className="vc-btn-secondary">
                 Publish Another
               </button>
             </div>
@@ -56,75 +65,19 @@ export const PublishStatus = ({ progress, onReset, onViewVideo }: Props) => {
       return (
         <div style={containerStyle}>
           <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🚫</div>
-          <h3 style={{ ...titleStyle, color: '#f59e0b' }}>Publishing Cancelled</h3>
-          <p style={messageStyle}>{message}</p>
-          {error && <p style={hintStyle}>{error}</p>}
-          <button onClick={onReset} style={{ ...primaryButtonStyle, marginTop: '0.75rem' }}>
+          <h3 className="text-lg font-bold mb-2" style={{ color: '#f59e0b' }}>Publishing Cancelled</h3>
+          <p className="text-[0.9375rem] max-w-[400px] m-0" style={{ color: 'var(--text-muted)' }}>{message}</p>
+          {error && <p className="text-[0.8125rem]" style={{ color: 'var(--text-muted)' }}>{error}</p>}
+          <button onClick={onReset} className="vc-btn-primary mt-3">
             Try Again
           </button>
         </div>
       );
 
     case 'error':
-      return (
-        <ErrorMessage
-          message={error ?? message}
-          onRetry={onReset}
-        />
-      );
+      return <ErrorMessage message={error ?? message} onRetry={onReset} />;
 
     default:
       return null;
   }
-};
-
-const containerStyle: React.CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  padding: '2rem',
-  textAlign: 'center',
-};
-
-const titleStyle: React.CSSProperties = {
-  fontSize: '1.125rem',
-  fontWeight: 700,
-  margin: 0,
-  marginBottom: '0.5rem',
-};
-
-const messageStyle: React.CSSProperties = {
-  fontSize: '0.9375rem',
-  color: '#374151',
-  margin: 0,
-  maxWidth: 400,
-};
-
-const hintStyle: React.CSSProperties = {
-  fontSize: '0.8125rem',
-  color: '#6b7280',
-  marginTop: '0.5rem',
-  maxWidth: 400,
-};
-
-const primaryButtonStyle: React.CSSProperties = {
-  padding: '0.5rem 1.25rem',
-  backgroundColor: '#6366f1',
-  color: '#fff',
-  border: 'none',
-  borderRadius: 8,
-  cursor: 'pointer',
-  fontSize: '0.875rem',
-  fontWeight: 600,
-};
-
-const secondaryButtonStyle: React.CSSProperties = {
-  padding: '0.5rem 1.25rem',
-  backgroundColor: '#f3f4f6',
-  color: '#374151',
-  border: '1px solid #d1d5db',
-  borderRadius: 8,
-  cursor: 'pointer',
-  fontSize: '0.875rem',
-  fontWeight: 600,
 };

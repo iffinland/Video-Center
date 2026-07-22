@@ -161,3 +161,16 @@ export const isValidComment = (value: unknown): value is CommentV1 => {
     (c.status === 'published' || c.status === 'deleted')
   );
 };
+
+// ── Architecture V2 types ──────────────────────────────────
+// Used by architectureV2/fieldPolicy.ts
+
+export type V2AttachmentReference = {
+  id: string;
+  service: string;
+  name: string;
+  identifier: string;
+  filename: string;
+  mimeType: string;
+  size: number;
+};

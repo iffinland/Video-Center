@@ -9,29 +9,33 @@ type Props = {
 export const VideoPlayer = ({ src, mimeType, poster }: Props) => {
   if (!src) {
     return (
-      <div style={{
-        width: '100%',
-        aspectRatio: '16 / 9',
-        backgroundColor: '#1f2937',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: '#9ca3af',
-        borderRadius: 10,
-      }}>
+      <div
+        style={{
+          width: '100%',
+          aspectRatio: '16 / 9',
+          backgroundColor: '#1f2937',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: '#9ca3af',
+          borderRadius: 10,
+        }}
+      >
         <p>Video source unavailable</p>
       </div>
     );
   }
 
   return (
-    <div style={{
-      width: '100%',
-      aspectRatio: '16 / 9',
-      backgroundColor: '#000',
-      borderRadius: 10,
-      overflow: 'hidden',
-    }}>
+    <div
+      style={{
+        width: '100%',
+        aspectRatio: '16 / 9',
+        backgroundColor: '#000',
+        borderRadius: 10,
+        overflow: 'hidden',
+      }}
+    >
       <video
         controls
         src={src}

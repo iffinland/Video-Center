@@ -1,0 +1,47 @@
+{
+  "schema": "qortium-app",
+  "schemaVersion": 1,
+  "app": {
+    "name": "Video Center",
+    "description": "Decentralized video sharing on Qortium QDN. Publish, discover, and comment on videos with identity-verified qvc-v2 envelopes.",
+    "category": "Media",
+    "version": "0.1.0",
+    "author": "Qortium Community",
+    "license": "MIT",
+    "homepage": "https://github.com/QortiumDev/video-center",
+    "repository": "https://github.com/QortiumDev/video-center"
+  },
+  "qdn": {
+    "service": "APP",
+    "name": "Video_Center",
+    "identifier": "video-center",
+    "entryPoint": "index.html"
+  },
+  "permissions": {
+    "qdnResources": ["FETCH_QDN_RESOURCE", "SEARCH_QDN_RESOURCES", "LIST_QDN_RESOURCES", "GET_QDN_RESOURCE_STATUS", "GET_QDN_RESOURCE_URL"],
+    "qdnPublish": ["PUBLISH_QDN_RESOURCE", "PUBLISH_MULTIPLE_QDN_RESOURCES", "SELECT_QDN_PUBLISH_SOURCE"],
+    "accounts": ["GET_SELECTED_ACCOUNT", "GET_ACCOUNT_NAMES", "GET_NAME_DATA"],
+    "payments": ["SEND_COIN"],
+    "nodeApi": ["FETCH_NODE_API"]
+  },
+  "qavs": {
+    "manifestVersion": 1,
+    "appId": "video-center",
+    "minHomeVersion": "0.1.0",
+    "bridgeActions": [
+      "FETCH_QDN_RESOURCE",
+      "SEARCH_QDN_RESOURCES",
+      "LIST_QDN_RESOURCES",
+      "GET_QDN_RESOURCE_STATUS",
+      "GET_QDN_RESOURCE_URL",
+      "PUBLISH_QDN_RESOURCE",
+      "PUBLISH_MULTIPLE_QDN_RESOURCES",
+      "SELECT_QDN_PUBLISH_SOURCE",
+      "GET_SELECTED_ACCOUNT",
+      "GET_ACCOUNT_NAMES",
+      "GET_NAME_DATA",
+      "SEND_COIN",
+      "FETCH_NODE_API"
+    ]
+  }
+}

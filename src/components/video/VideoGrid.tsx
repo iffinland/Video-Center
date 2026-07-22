@@ -1,25 +1,24 @@
-// Video Center — video grid
+// Video Center — V2 video grid (Tailwind)
 
-import type { SearchResultItem } from '../../types/video';
+import type { VideoCreate } from '../../services/architectureV2/types';
 import { VideoCard } from './VideoCard';
 
 type Props = {
-  videos: SearchResultItem[];
-  onVideoClick: (item: SearchResultItem) => void;
+  videos: VideoCreate[];
+  onVideoClick: (item: VideoCreate) => void;
 };
 
 export const VideoGrid = ({ videos, onVideoClick }: Props) => {
   return (
-    <div style={{
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-      gap: '1rem',
-    }}>
-      {videos.map((item) => (
+    <div
+      className="grid gap-4"
+      style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}
+    >
+      {videos.map((video) => (
         <VideoCard
-          key={`${item.name}-${item.identifier}`}
-          item={item}
-          onClick={() => onVideoClick(item)}
+          key={`${video.publisherName}-${video.entityId}`}
+          video={video}
+          onClick={() => onVideoClick(video)}
         />
       ))}
     </div>

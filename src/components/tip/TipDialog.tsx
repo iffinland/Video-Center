@@ -81,15 +81,15 @@ export const TipDialog = ({
           </div>
         ) : (
           <>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '1rem',
-            }}>
-              <h3 style={{ fontSize: '1.125rem', fontWeight: 700, margin: 0 }}>
-                Send Tip
-              </h3>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '1rem',
+              }}
+            >
+              <h3 style={{ fontSize: '1.125rem', fontWeight: 700, margin: 0 }}>Send Tip</h3>
               <button
                 onClick={onClose}
                 style={{
@@ -110,14 +110,16 @@ export const TipDialog = ({
             </p>
 
             {error && (
-              <div style={{
-                padding: '0.5rem 0.75rem',
-                backgroundColor: '#fef2f2',
-                borderRadius: 6,
-                color: '#ef4444',
-                fontSize: '0.8125rem',
-                marginBottom: '0.75rem',
-              }}>
+              <div
+                style={{
+                  padding: '0.5rem 0.75rem',
+                  backgroundColor: '#fef2f2',
+                  borderRadius: 6,
+                  color: '#ef4444',
+                  fontSize: '0.8125rem',
+                  marginBottom: '0.75rem',
+                }}
+              >
                 {error}
                 <button
                   onClick={onReset}
@@ -137,13 +139,15 @@ export const TipDialog = ({
             )}
 
             <form onSubmit={handleSubmit}>
-              <label style={{
-                display: 'block',
-                fontSize: '0.8125rem',
-                fontWeight: 600,
-                color: '#374151',
-                marginBottom: '0.375rem',
-              }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '0.8125rem',
+                  fontWeight: 600,
+                  color: '#374151',
+                  marginBottom: '0.375rem',
+                }}
+              >
                 Amount (QORT)
               </label>
               <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
